@@ -11,7 +11,7 @@
     </div>
 
     <div
-      class="z-10 relative flex items-center mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 min-h-screen overflow-y-auto container"
+      class="relative flex items-center mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 min-h-screen overflow-y-auto container"
     >
       <div class="flex lg:flex-row flex-col justify-between items-center gap-8 lg:gap-16 w-full">
         <!-- Text Content - Enhanced for visual appeal -->
@@ -137,7 +137,7 @@
           <div class="relative mx-auto illustration-container">
             <!-- Main illustration image -->
             <img
-              src="https://res.cloudinary.com/eves-oasis/image/upload/bookstore_fhwcao.jpg"
+              src="https://images.pexels.com/photos/256431/pexels-photo-256431.jpeg"
               alt="Bookstore Illustration"
               class="shadow-2xl rounded-lg w-full h-auto max-h-[500px] lg:max-h-[600px] object-cover illustration-image"
             />
@@ -158,7 +158,7 @@
 
 <script setup></script>
 
-<!-- <style>
+<style>
 /* Animation keyframes */
 @keyframes float {
   0% {
@@ -305,4 +305,4 @@
 .animate-fade-in-delayed-4 {
   animation-fill-mode: both;
 }
-</style> -->
+</style>

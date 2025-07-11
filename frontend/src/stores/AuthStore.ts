@@ -195,7 +195,9 @@ export const useAuthStore = defineStore(
     }
   },
   {
-    persist: true,
+    persist: {
+      pick: ['user'],
+    },
   },
 )
 

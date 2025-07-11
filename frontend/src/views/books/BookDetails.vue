@@ -1,29 +1,33 @@
 <script setup lang="ts">
 import type { Book } from '@/Types/types'
-import { ref } from 'vue'
-import { useDateFormat } from '@vueuse/core'
+import { onMounted, ref } from 'vue'
+import { useDateFormat, useFetch } from '@vueuse/core'
+import { useRoute } from 'vue-router'
+import { useBookStore } from '@/stores/BookStore'
+import { getImageUrl } from '@/services/Api'
 
-const {
-  selectedBook = {
-    id: 0,
-    bookName: 'Sample Book Title',
-    category: 'Fiction',
-    price: 29.99,
-    description:
-      'A captivating story that takes readers on an unforgettable journey through mystery and adventure.',
-    imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400',
-  },
-  editBook = (book: Book) => {
-    console.log('Edit book:', book)
-  },
-  showBookDetailsProp = true,
-} = defineProps<{
-  selectedBook: Book
-  showBookDetailsProp: boolean
-  editBook: (book: Book) => void
-}>()
+const route = useRoute()
+const bookStore = useBookStore()
 
-const showBookDetails = ref(showBookDetailsProp)
+const bookId = Number(route.params.id)
+
+const selectedBook = ref<Book | null>(null)
+const isFetching = ref(false)
+
+const fetchBook = async () => {
+  isFetching.value = true
+  selectedBook.value = await bookStore.getBookById(bookId)
+  isFetching.value = false
+}
+
+const editBook = (book: Book) => {
+  console.log('Edit book:', book)
+}
+
+onMounted(() => {
+  fetchBook()
+  console.log('Book ID:', typeof bookId)
+})
 </script>
 
 <template>
@@ -53,7 +57,7 @@ const showBookDetails = ref(showBookDetailsProp)
           <div class="flex sm:flex-row flex-col gap-6">
             <div class="flex-shrink-0 w-full sm:w-1/2 md:w-5/12 lg:w-1/3">
               <img
-                :src="selectedBook.imageUrl"
+                :src="getImageUrl(selectedBook.imageUrl)"
                 :alt="selectedBook.bookName"
                 class="shadow-md rounded-lg w-full h-69 object-cover"
               />

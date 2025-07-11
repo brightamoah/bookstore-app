@@ -108,9 +108,10 @@
               label="Log In"
               size="xl"
               trailing-icon="i-lucide-log-in"
+              loading-icon="i-lucide-loader"
               :loading="isLoading"
               :disabled="!isLoginFormValid"
-              class="flex justify-center items-center shadow-sm px-4 py-2 sm:py-2.5 rounded-full focus:outline-none focus:ring-2 w-full sm:w-[85%] md:w-[70%] font-semibold text-white text-sm sm:text-base transition-all"
+              class="flex justify-center items-center shadow-sm px-4 py-2 sm:py-2.5 rounded-full focus:outline-none focus:ring-2 w-full sm:w-[85%] md:w-[70%] font-semibold text-white text-sm sm:text-base transition-all cursor-pointer"
             />
           </div>
         </UForm>

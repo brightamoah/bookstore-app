@@ -1,8 +1,11 @@
 using System.Text;
+using AspNetCoreRateLimit;
 using Backend.Data;
 using Backend.Helpers;
+using Backend.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
 
@@ -25,6 +28,7 @@ namespace Backend
             services.AddDbContext<UserContext>(options =>
             options.UseMySQL(connectionString));
             services.AddControllers();
+            services.AddHttpContextAccessor();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IBookRepository, BookRepository>();
             services.AddScoped<JwtService>();
@@ -32,6 +36,7 @@ namespace Backend
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
+            RateLimitConfig.ConfigureRateLimit(services, Configuration);
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
@@ -78,16 +83,23 @@ namespace Backend
             {
                 app.UseDeveloperExceptionPage();
             }
+
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "BookStoreApi v1"));
 
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors("AllowVueApp");
-            app.UseAuthentication();
-            app.UseAuthorization();
+            app.UseIpRateLimiting();
+
+            app.UseMiddleware<GlobalExceptionMiddleware>();
+
+            app.UseStaticFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(env.WebRootPath, "uploads")),
+                RequestPath = "/uploads",
                 OnPrepareResponse = ctx =>
        {
            ctx.Context.Response.Headers.Append(
@@ -99,9 +111,13 @@ namespace Backend
        }
             });
 
+
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/health");
             });
         }
     }

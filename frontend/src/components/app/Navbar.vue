@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore'
 import { storeToRefs } from 'pinia'
 import { useRoute, type _RouteRecordBase } from 'vue-router'
+import SearchModal from './SearchModal.vue'
 
 const route = useRoute()
 
@@ -68,8 +69,7 @@ const isActiveRoute = (path: _RouteRecordBase['path']) => {
 
     <section>
       <div class="flex justify-between items-center gap-4">
-        <!-- <UIcon name="i-lucide-shopping-cart" class="size-6 cursor-pointer" /> -->
-
+        <SearchModal v-if="isLoggedIn" />
         <UButton
           :label="authLabel"
           color="primary"

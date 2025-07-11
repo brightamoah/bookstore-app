@@ -11,7 +11,7 @@ namespace Backend.Models
         public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; } = null;
         [JsonIgnore] public string Password { get; set; } = string.Empty;
     }
 }

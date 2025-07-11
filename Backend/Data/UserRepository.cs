@@ -6,22 +6,24 @@ namespace Backend.Data
     {
         private readonly UserContext _context = context;
 
-        public User CreateUser(User user)
+        public Task<User> CreateUser(User user)
         {
 
             _context.Users.Add(user);
             user.Id = _context.SaveChanges();
-            return user;
+            return Task.FromResult(user);
         }
 
-        public User? GetUserByEmail(string email)
+        public Task<User?> GetUserByEmail(string email)
         {
-            return _context.Users.FirstOrDefault(u => u.Email == email);
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            return Task.FromResult<User?>(user);
         }
 
-        public User? GetUserById(int id)
+        public Task<User?> GetUserById(int id)
         {
-            return _context.Users.FirstOrDefault(u => u.Id == id);
+            var user = _context.Users.FirstOrDefault(u => u.Id == id);
+            return Task.FromResult(user);
         }
     }
 }

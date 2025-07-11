@@ -18,7 +18,7 @@ namespace Backend
                     })
                     .ConfigureServices(services =>
                         {
-                            services.AddHealthChecks(); // Add health checks
+                            services.AddHealthChecks();
                         })
                         .UseIISIntegration()
                         .CaptureStartupErrors(true);

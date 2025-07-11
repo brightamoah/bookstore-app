@@ -1,44 +1,50 @@
 <!-- pages/dashboard.vue -->
 <template>
   <div class="min-h-screen">
-    <!-- Header -->
-    <div class="shadow-sm border-b">
-      <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        <div class="flex justify-between items-center py-6">
-          <div>
-            <h1 class="font-bold text-2xl">
-              <UIcon name="tabler-books" class="size-10 text-primary" />
-              <span>Book Store Dashboard</span>
-            </h1>
-            <p class="mt-1">Manage your book inventory</p>
-          </div>
-          <AddModal @submit="handleBookSubmitted" @success="handleSuccess" @error="handleError" />
-        </div>
-      </div>
-    </div>
+    <BookHeader @submit="handleBookSubmitted" @success="handleSuccess" @error="handleError" />
 
-    <!-- Main Content -->
     <div class="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
-      <!-- Book Details Modal -->
-
-      <!-- Books Grid -->
-      <BookGrid :edit-book :delete-book :show-book-detail :books />
-
-      <!-- Empty State -->
-      <div v-if="books.length === 0" class="py-12 text-center">
-        <div class="mx-auto w-12 h-12 text-gray-400">📚</div>
-        <h3 class="mt-4 font-medium text-gray-900 dark:text-white text-sm">No books</h3>
-        <p class="mt-1 text-gray-500 dark:text-gray-400 text-sm">
-          Get started by adding your first book to the inventory.
-        </p>
-        <div class="mt-6">
-          <UButton @click="openAddModal" color="primary" variant="solid" icon="i-heroicons-plus">
-            Add New Book
-          </UButton>
-        </div>
+      <div v-if="!isLoading && !errorMessage" class="mb-6">
+        <Pagination
+          :current-page-first="currentPageFirst"
+          :current-page-last="currentPageLast"
+          :total-books="totalBooks"
+          :page-size="pageSize"
+          :page-size-options="pageSizeOptions"
+          @update:page-size="onPageSizeChange"
+        />
       </div>
+
+      <LoadingState v-if="isLoading" />
+
+      <ErrorState v-else-if="errorMessage" :error-message="errorMessage" @retry="loadBooks" />
+
+      <div v-else-if="paginatedBooks.length > 0">
+        <BookGrid
+          :edit-book="editBook"
+          :show-book-detail="showBookDetail"
+          :books="paginatedBooks"
+          :delete-book="handleDeleteBook"
+          @delete-book="handleDeleteBook"
+        />
+
+        <PaginationControls
+          :current-page="currentPage"
+          :page-count="pageCount"
+          :total-books="totalBooks"
+          :can-prev="canPrev"
+          :can-next="canNext"
+          :visible-pages="visiblePages"
+          @first="first"
+          @prev="prev"
+          @next="next"
+          @last="last"
+          @go-to-page="goToPage"
+        />
+      </div>
+
+      <EmptyState v-else />
     </div>
-    <!-- <UpdateModal v-model="showBookForm" /> -->
   </div>
 </template>
 
@@ -46,15 +52,113 @@
 import { useBookStore } from '@/stores/BookStore'
 import type { Book } from '@/Types/types'
 import { get } from 'http'
-import { ref, reactive } from 'vue'
+import { storeToRefs } from 'pinia'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useOffsetPagination } from '@vueuse/core'
 
 const router = useRouter()
 
 const bookstore = useBookStore()
-const { getAllBooks } = bookstore
+const { books, isLoading, errorMessage, totalBooks, bookFormData } = storeToRefs(bookstore)
+const { getAllBooks, clearBookFormdata } = bookstore
 
 const toast = useToast()
+
+const booksLoaded = ref(false)
+
+const pageSize = ref(6)
+const pageSizeOptions = [
+  { label: '6', value: 6 },
+  { label: '12', value: 12 },
+  { label: '24', value: 24 },
+  { label: '48', value: 48 },
+]
+
+const { currentPage, currentPageSize, pageCount, isFirstPage, isLastPage, prev, next } =
+  useOffsetPagination({
+    total: computed(() => books.value.length),
+    page: 1,
+    pageSize: pageSize,
+  })
+
+const paginatedBooks = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return books.value.slice(start, end)
+})
+
+const currentPageFirst = computed(() => {
+  if (books.value.length === 0) return 0
+  return (currentPage.value - 1) * pageSize.value + 1
+})
+
+const currentPageLast = computed(() => {
+  if (books.value.length === 0) return 0
+  return Math.min(currentPage.value * pageSize.value, books.value.length)
+})
+
+const canPrev = computed(() => !isFirstPage.value)
+const canNext = computed(() => !isLastPage.value)
+
+const visiblePages = computed(() => {
+  const pages: (number | string)[] = []
+  const totalPages = pageCount.value
+  const current = currentPage.value
+
+  if (current > 3) pages.push(1)
+  if (current > 4) pages.push('...')
+
+  for (let i = Math.max(1, current - 2); i <= Math.min(totalPages, current + 2); i++) {
+    if (!pages.includes(i)) pages.push(i)
+  }
+  if (current < totalPages - 3) pages.push('...')
+  if (current < totalPages - 2 && totalPages > 1) pages.push(totalPages)
+
+  return pages.filter((page) => page !== '...' || pages.indexOf(page) === pages.lastIndexOf(page))
+})
+
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= pageCount.value) {
+    currentPage.value = page
+  }
+}
+
+const first = () => {
+  currentPage.value = 1
+}
+
+const last = () => {
+  currentPage.value = pageCount.value
+}
+
+const onPageSizeChange = (newPageSize: number) => {
+  pageSize.value = newPageSize
+  currentPage.value = 1
+}
+
+// Watch for page changes to scroll to top
+watch(currentPage, () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+})
+
+const loadBooks = async () => {
+  if (booksLoaded.value && books.value.length > 0) return
+  try {
+    await getAllBooks()
+    booksLoaded.value = true
+  } catch (error) {
+    console.error('Failed to load books:', error)
+  }
+}
+
+onMounted(async () => {
+  if (books.value.length === 0 && !booksLoaded.value) {
+    await loadBooks()
+  } else {
+    booksLoaded.value = true
+  }
+})
 
 const handleBookSubmitted = (book: Omit<Book, 'id'>) => {
   console.log('Book submitted:', book)
@@ -66,6 +170,9 @@ const handleSuccess = (message: string) => {
     description: message,
     color: 'success',
   })
+  booksLoaded.value = false
+  currentPage.value = 1
+  loadBooks()
 }
 
 const handleError = (message: string) => {
@@ -79,88 +186,14 @@ const handleError = (message: string) => {
 const editBook = (book: Book) => {
   isEditing.value = true
   showBookDetails.value = false
-  Object.assign(bookForm, book)
+  Object.assign(bookFormData, book)
   showBookForm.value = true
 }
 
-const deleteBook = (book: Book) => {
-  bookToDelete.value = book
-  showDeleteModal.value = true
-}
-
-const book = ref<Book>({
-  id: 0,
-  bookName: '',
-  author: '',
-  category: '',
-  price: 0,
-  imageUrl: '',
-  description: '',
-})
-// const books = ref([])
-// Reactive data
-const books = ref([
-  {
-    id: 1,
-    bookName: 'The Great Gatsby',
-    author: 'F. Scott Fitzgerald',
-    category: 'Fiction',
-    price: 12.99,
-    stock: 25,
-    publishedYear: 1925,
-    imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop',
-    description:
-      'A classic American novel set in the Jazz Age, exploring themes of wealth, love, and the American Dream through the eyes of narrator Nick Carraway.',
-  },
-  {
-    id: 2,
-    bookName: 'To Kill a Mockingbird',
-    author: 'Harper Lee',
-    category: 'Fiction',
-    price: 14.99,
-    stock: 18,
-    publishedYear: 1960,
-    imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
-    description:
-      'A gripping tale of racial injustice and childhood innocence in 1930s Alabama, told through the perspective of young Scout Finch.',
-  },
-  {
-    id: 3,
-    bookName: '1984',
-    author: 'George Orwell',
-    category: 'Dystopian',
-    price: 13.99,
-    stock: 0,
-    publishedYear: 1949,
-    imageUrl: 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?w=300&h=400&fit=crop',
-    description:
-      'A dystopian social science fiction novel that explores the dangers of totalitarianism and extreme political ideology.',
-  },
-  {
-    id: 4,
-    bookName: 'Pride and Prejudice',
-    author: 'Jane Austen',
-    category: 'Romance',
-    price: 11.99,
-    stock: 32,
-    publishedYear: 1813,
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    description:
-      'A romantic novel that critiques the British landed gentry at the end of the 18th century, focusing on Elizabeth Bennet and Mr. Darcy.',
-  },
-  {
-    id: 5,
-    bookName: 'The Catcher in the Rye',
-    author: 'J.D. Salinger',
-    category: 'Fiction',
-    price: 10.99,
-    stock: 15,
-    publishedYear: 1951,
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    description:
-      'A novel about teenage angst and alienation, narrated by the iconic character Holden Caulfield, who recounts his experiences in New York City after being expelled from prep school.',
-  },
-])
+// const deleteBook = (book: Book) => {
+//   bookToDelete.value = book
+//   showDeleteModal.value = true
+// }
 
 // Form and modal states
 const showBookForm = ref(false)
@@ -172,65 +205,62 @@ const deleting = ref(false)
 const selectedBook = ref<Book | null>(null)
 const bookToDelete = ref<Book | null>(null)
 
-// Form data
-const bookForm = reactive({
-  title: '',
-  author: '',
-  genre: '',
-  price: '',
-  stock: '',
-  publishedYear: '',
-  imageUrl: '',
-  description: '',
-})
-
-// Genre options
-const genres = [
-  'Fiction',
-  'Non-Fiction',
-  'Mystery',
-  'Romance',
-  'Science Fiction',
-  'Fantasy',
-  'Biography',
-  'History',
-  'Self-Help',
-  'Business',
-  'Poetry',
-  'Drama',
-  'Horror',
-  'Thriller',
-  'Dystopian',
-]
+const handleDeleteBook = async (book: Book) => {
+  try {
+    await bookstore.deleteBook(book.id)
+    toast.add({
+      title: 'Success',
+      description: `"${book.bookName}" has been deleted successfully`,
+      color: 'success',
+    })
+  } catch (error) {
+    toast.add({
+      title: 'Error',
+      description: 'Failed to delete book',
+      color: 'error',
+    })
+  }
+}
 
 // Methods
 const openAddModal = () => {
   isEditing.value = false
-  resetForm()
+  clearBookFormdata()
   showBookForm.value = true
 }
 
 const closeBookForm = () => {
   showBookForm.value = false
-  resetForm()
-}
-
-const resetForm = () => {
-  Object.assign(bookForm, {
-    title: '',
-    author: '',
-    genre: '',
-    price: '',
-    stock: '',
-    publishedYear: '',
-    cover: '',
-    description: '',
-  })
+  clearBookFormdata()
 }
 
 const showBookDetail = (book: Book) => {
-  selectedBook.value = book
-  // showBookDetails.value = true
-  router.push({ name: 'book-details', params: { id: book.id } })
+  const bookIdentifier = book.bookId || book.id
+  if (!book || !bookIdentifier) {
+    console.error('Book or book.id is missing:', book)
+    toast.add({
+      title: 'Error',
+      description: 'Cannot view book details: Invalid book data',
+      color: 'error',
+    })
+    return
+  }
+  try {
+    selectedBook.value = book
+    // Use bookId instead of id if that's what your API expects
+    router.push({
+      name: 'book-details',
+      params: {
+        id: bookIdentifier,
+      },
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to navigate to book details',
+      color: 'error',
+    })
+  }
 }
 </script>

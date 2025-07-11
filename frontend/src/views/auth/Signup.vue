@@ -4,7 +4,7 @@
       <div class="bg-muted shadow-lg px-4 sm:px-8 md:px-10 py-6 sm:py-8 rounded-lg sm:rounded-lg">
         <div class="sm:mx-auto mb-4 sm:mb-6 sm:w-full sm:max-w-md">
           <h2 class="font-bold text-xl sm:text-2xl text-center">
-            Welcome Back To
+            Welcome To
             <span class="text-primary">BookHaven!</span>
           </h2>
           <p class="text-sm sm:text-base text-center capitalize">Please sign up to continue</p>
@@ -184,9 +184,10 @@
               label="Create Account"
               :loading="isLoading"
               size="xl"
+              loading-icon="i-lucide-loader"
               trailing-icon="i-lucide-user-plus"
               :disabled="!isSignupFormValid"
-              class="flex justify-center items-center disabled:opacity-50 shadow-sm px-4 py-2 sm:py-2.5 rounded-full focus:outline-none focus:ring-2 w-full sm:w-[85%] md:w-[70%] font-semibold text-white text-sm sm:text-base transition-all disabled:cursor-not-allowed"
+              class="flex justify-center items-center disabled:opacity-50 shadow-sm px-4 py-2 sm:py-2.5 rounded-full focus:outline-none focus:ring-2 w-full sm:w-[85%] md:w-[70%] font-semibold text-white text-sm sm:text-base transition-all cursor-pointer disabled:cursor-not-allowed"
             />
           </div>
         </UForm>

@@ -25,7 +25,8 @@ export interface AuthData extends User {
 }
 
 export interface Book {
-  id: number
+  bookId: number
+  id?: number
   bookName: string
   category: string
   price: number
@@ -43,4 +44,12 @@ export interface ValidationErrors {
   price?: string
   description?: string
   imageUrl?: string
+}
+
+export interface SearchResult {
+  books: Book[]
+  query: string
+  page: number
+  pageSize: number
+  totalResults: number
 }

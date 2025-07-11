@@ -3,9 +3,10 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Backend.Data;
 
-public class ImageRepository(IWebHostEnvironment environment) : IImageRepository
+public class ImageRepository(IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor) : IImageRepository
 {
     private readonly IWebHostEnvironment _environment = environment;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly string _imageDirectory = "uploads/books";
 
     public async Task<string> SaveImageAsync(string base64Image)
@@ -36,7 +37,8 @@ public class ImageRepository(IWebHostEnvironment environment) : IImageRepository
                 await image.SaveAsJpegAsync(filePath);
             }
             // Return the relative path
-            return Path.Combine(_imageDirectory, fileName).Replace("\\", "/");
+            var relativePath = Path.Combine(_imageDirectory, fileName).Replace("\\", "/");
+            return GetFullImageUrl(relativePath);
         }
         catch (Exception e)
         {
@@ -49,10 +51,28 @@ public class ImageRepository(IWebHostEnvironment environment) : IImageRepository
     {
         if (string.IsNullOrEmpty(imagePath)) return;
 
-        var fullPath = Path.Combine(_environment.WebRootPath, imagePath);
+        // Handle both full URLs and relative paths
+        var relativePath = imagePath.StartsWith("http")
+            ? new Uri(imagePath).AbsolutePath.TrimStart('/')
+            : imagePath;
+
+        var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
         if (File.Exists(fullPath))
         {
             File.Delete(fullPath);
         }
+    }
+
+    private string GetFullImageUrl(string relativePath)
+    {
+        var request = _httpContextAccessor.HttpContext?.Request;
+        if (request != null)
+        {
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            return $"{baseUrl}/{relativePath}";
+        }
+
+        // Fallback for when HttpContext is not available
+        return $"/{relativePath}";
     }
 }

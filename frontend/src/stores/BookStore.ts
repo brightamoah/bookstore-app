@@ -22,7 +22,7 @@ export const useBookStore = defineStore(
     const errorMessage = ref<string | null>(null)
     const validationErrors = ref<ValidationErrors>({})
     const imagePreview = ref<string>('')
-    const bookFormData = reactive<Omit<Book, 'id'>>({
+    const bookFormData = reactive<Omit<Book, 'bookId'>>({
       bookName: '',
       category: 'Fiction',
       author: '',

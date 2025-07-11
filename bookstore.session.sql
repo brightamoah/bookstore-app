@@ -78,3 +78,44 @@ VALUES (
     );
 
 -- drop table if exists books;
+
+-- Update existing books with authors based on their IDs
+UPDATE Books
+SET
+    Author = CASE BookId
+        WHEN 11 THEN 'Harper Lee'
+        WHEN 13 THEN 'George Orwell'
+        WHEN 14 THEN 'F. Scott Fitzgerald'
+        WHEN 16 THEN 'J.K. Rowling'
+        WHEN 17 THEN 'Jane Austen'
+        WHEN 18 THEN 'Stephen King'
+        WHEN 19 THEN 'Agatha Christie'
+        WHEN 20 THEN 'Dan Brown'
+        WHEN 22 THEN 'J.R.R. Tolkien'
+        WHEN 25 THEN 'Ernest Hemingway'
+        WHEN 26 THEN 'Mark Twain'
+        WHEN 27 THEN 'Charles Dickens'
+        WHEN 28 THEN 'William Shakespeare'
+        ELSE 'Unknown Author'
+    END,
+    CreatedAt = CASE
+        WHEN CreatedAt IS NULL THEN NOW()
+        ELSE CreatedAt
+    END,
+    UpdatedAt = NOW()
+WHERE
+    BookId IN (
+        11,
+        13,
+        14,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        25,
+        26,
+        27,
+        28
+    );

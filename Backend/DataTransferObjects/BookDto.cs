@@ -14,6 +14,10 @@ public class BookDto
     public required string Category { get; set; }
 
     [Required]
+    [StringLength(100)]
+    public required string Author { get; set; }
+
+    [Required]
     [Range(0.01, 9999.99)]
     public decimal Price { get; set; }
 
@@ -22,7 +26,10 @@ public class BookDto
     public required string Description { get; set; }
 
     [Required]
-    [Url]
     public required string ImageUrl { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 
 }
