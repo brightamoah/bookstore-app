@@ -11,8 +11,8 @@ namespace Backend
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>().
-                    UseKestrel(options =>
+                    webBuilder.UseStartup<Startup>()
+                    .UseKestrel(options =>
                     {
                         options.Limits.MaxRequestBodySize = 50 * 1024 * 1024; // 50 MB
                     })
@@ -21,7 +21,8 @@ namespace Backend
                             services.AddHealthChecks();
                         })
                         .UseIISIntegration()
-                        .CaptureStartupErrors(true);
+                        .CaptureStartupErrors(true)
+                        .UseUrls($"http://*:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
                 });
     }
 }
