@@ -31,7 +31,8 @@ const handleError = (message: string) => {
           </h1>
           <p class="mt-1">Manage your book inventory</p>
         </div>
-        <AddModal @submit="handleBookSubmitted" @success="handleSuccess" @error="handleError" />
+        <!-- <AddModal @submit="handleBookSubmitted" @success="handleSuccess" @error="handleError" /> -->
+        <EditModal @error="handleError" @success="handleSuccess" @submit="handleBookSubmitted" />
       </div>
     </div>
   </div>

@@ -28,6 +28,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 4000,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
@@ -38,8 +39,15 @@ export default defineConfig({
           'Content-Type': 'application/json',
         },
         configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('Proxy error:', err)
+          })
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Sending Request to the Target:', req.method, req.url)
             proxyReq.setHeader('Origin', 'http://localhost:4000')
+          })
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Received Response from the Target:', proxyRes.statusCode, req.url)
           })
         },
       },

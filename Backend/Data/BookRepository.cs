@@ -31,8 +31,22 @@ public class BookRepository(UserContext context) : IBookRepository
 
     public async Task UpdateBookAsync(Book book)
     {
+        var existingBook = await _context.Books.FindAsync(book.BookId);
+        if (existingBook == null)
+        {
+            throw new InvalidOperationException($"Book with ID {book.BookId} not found");
+        }
+        existingBook.BookName = book.BookName;
+        existingBook.Category = book.Category;
+        existingBook.Author = book.Author;
+        existingBook.Price = book.Price;
+        existingBook.Description = book.Description;
+        existingBook.ImageUrl = book.ImageUrl;
+        existingBook.CreatedAt = book.CreatedAt;
+        existingBook.UpdatedAt = DateTime.UtcNow;
+
         book.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(book).State = EntityState.Modified;
+        _context.Entry(existingBook).State = EntityState.Modified;
         await _context.SaveChangesAsync();
     }
 

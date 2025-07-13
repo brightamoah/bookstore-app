@@ -1,4 +1,3 @@
-<!-- pages/dashboard.vue -->
 <template>
   <div class="min-h-screen">
     <BookHeader @submit="handleBookSubmitted" @success="handleSuccess" @error="handleError" />
@@ -17,12 +16,18 @@
 
       <LoadingState v-if="isLoading" />
 
-      <ErrorState v-else-if="errorMessage" :error-message="errorMessage" @retry="loadBooks" />
+      <ErrorState
+        v-else-if="errorMessage"
+        :error-message="errorMessage"
+        @retry="retryLoadBooks"
+        @clear-error="clearError"
+      />
 
       <div v-else-if="paginatedBooks.length > 0">
         <BookGrid
           :edit-book="editBook"
           :show-book-detail="showBookDetail"
+          :is-loading
           :books="paginatedBooks"
           :delete-book="handleDeleteBook"
           @delete-book="handleDeleteBook"
@@ -43,13 +48,14 @@
         />
       </div>
 
-      <EmptyState v-else />
+      <EmptyState @fetch-books="loadBooks" v-else />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useBookStore } from '@/stores/BookStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import type { Book } from '@/Types/types'
 import { get } from 'http'
 import { storeToRefs } from 'pinia'
@@ -60,8 +66,10 @@ import { useOffsetPagination } from '@vueuse/core'
 const router = useRouter()
 
 const bookstore = useBookStore()
+const authStore = useAuthStore()
+const { user, isLoggedIn } = storeToRefs(authStore)
 const { books, isLoading, errorMessage, totalBooks, bookFormData } = storeToRefs(bookstore)
-const { getAllBooks, clearBookFormdata } = bookstore
+const { getAllBooks, clearBookFormdata, deleteBook, clearError, refreshBooks } = bookstore
 
 const toast = useToast()
 
@@ -143,12 +151,79 @@ watch(currentPage, () => {
 })
 
 const loadBooks = async () => {
-  if (booksLoaded.value && books.value.length > 0) return
+  if (!isLoggedIn.value && !user.value) {
+    console.log('User not authenticated, redirecting to login')
+    router.push({
+      name: 'login',
+      query: {
+        redirect: '/books',
+        message: 'Please log in to view books',
+      },
+    })
+    return
+  }
+  // if (booksLoaded.value && books.value.length > 0) return
   try {
+    clearError()
     await getAllBooks()
     booksLoaded.value = true
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to load books:', error)
+    booksLoaded.value = false
+    if (error.response?.status === 401) {
+      toast.add({
+        title: 'Authentication Required',
+        description: 'Please log in to view books',
+        color: 'error',
+      })
+
+      router.push({
+        name: 'login',
+        query: {
+          redirect: '/books',
+          message: 'Please log in to view books',
+        },
+      })
+    }
+  }
+}
+
+const retryLoadBooks = async () => {
+  if (!isLoggedIn.value && !user.value) {
+    console.log('User not authenticated, redirecting to login')
+    router.push({
+      name: 'login',
+      query: {
+        redirect: '/books',
+        message: 'Please log in to view books',
+      },
+    })
+    return
+  }
+  try {
+    booksLoaded.value = false
+    clearError()
+    await refreshBooks()
+    booksLoaded.value = true
+  } catch (error: any) {
+    console.error('Failed to retry loading books:', error)
+    booksLoaded.value = false
+
+    if (error.response?.status === 401) {
+      toast.add({
+        title: 'Authentication Required',
+        description: 'Please log in to view books',
+        color: 'error',
+      })
+
+      router.push({
+        name: 'login',
+        query: {
+          redirect: '/books',
+          message: 'Session expired. Please log in again.',
+        },
+      })
+    }
   }
 }
 
@@ -172,7 +247,7 @@ const handleSuccess = (message: string) => {
   })
   booksLoaded.value = false
   currentPage.value = 1
-  loadBooks()
+  retryLoadBooks()
 }
 
 const handleError = (message: string) => {
@@ -207,7 +282,7 @@ const bookToDelete = ref<Book | null>(null)
 
 const handleDeleteBook = async (book: Book) => {
   try {
-    await bookstore.deleteBook(book.id)
+    await bookstore.deleteBook(book.bookId)
     toast.add({
       title: 'Success',
       description: `"${book.bookName}" has been deleted successfully`,

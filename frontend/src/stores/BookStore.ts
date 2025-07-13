@@ -17,12 +17,12 @@ export const useBookStore = defineStore(
   'BookStore',
   () => {
     const books = ref<Book[]>([])
-    const book = ref<Book>()
+    const book = ref<Book | null>(null)
     const isLoading = ref<boolean>(false)
     const errorMessage = ref<string | null>(null)
     const validationErrors = ref<ValidationErrors>({})
     const imagePreview = ref<string>('')
-    const bookFormData = reactive<Omit<Book, 'bookId'>>({
+    const bookFormData = reactive<Omit<Book, 'bookId'> & { bookId?: number }>({
       bookName: '',
       category: 'Fiction',
       author: '',
@@ -44,17 +44,6 @@ export const useBookStore = defineStore(
         {} as Record<string, number>,
       )
     })
-
-    // const isFormValid = computed(() => {
-    //   return (
-    //     bookFormData.bookName.trim() &&
-    //     bookFormData.category.trim() &&
-    //     bookFormData.author.trim() &&
-    //     bookFormData.price > 0 &&
-    //     bookFormData.description.trim() &&
-    //     bookFormData.imageUrl.trim()
-    //   )
-    // })
 
     const validate = (state: typeof bookFormData): FormError[] => {
       return validateForm(state)
@@ -145,15 +134,28 @@ export const useBookStore = defineStore(
       }
     }
 
-    const updateBook = async (id: Book['id'], bookData: Partial<Book>) => {
+    const updateBook = async (id: Book['bookId'], bookData: Partial<Book>) => {
       isLoading.value = true
       errorMessage.value = null
 
       try {
-        const response = await api.put(`/api/books/${id}`, { ...bookData, id })
+        const updateData = {
+          bookId: id,
+          bookName: bookData.bookName,
+          category: bookData.category,
+          author: bookData.author,
+          price: Number(bookData.price),
+          description: bookData.description,
+          imageUrl: bookData.imageUrl || '',
+          createdAt: bookData.createdAt,
+          updatedAt: new Date().toISOString(),
+        }
+        console.log('Sending update data:', updateData)
+
+        const response = await api.put(`/api/books/${id}`, updateData)
         const updatedBook = response.data
 
-        const index = books.value.findIndex((book) => book.id === id)
+        const index = books.value.findIndex((book) => book.bookId === id)
         if (index !== -1) {
           books.value[index] = updatedBook
         }
@@ -168,13 +170,13 @@ export const useBookStore = defineStore(
       }
     }
 
-    const deleteBook = async (id: Book['id']) => {
+    const deleteBook = async (id: Book['bookId']) => {
       isLoading.value = true
       errorMessage.value = null
 
       try {
         await api.delete(`/api/books/${id}`)
-        books.value = books.value.filter((book) => book.id !== id)
+        books.value = books.value.filter((book) => book.bookId !== id)
         console.log(`Book with id ${id} deleted successfully`)
       } catch (err: any) {
         errorMessage.value = err.response?.data?.message || 'Failed to delete book'
@@ -182,6 +184,11 @@ export const useBookStore = defineStore(
       } finally {
         isLoading.value = false
       }
+    }
+
+    const refreshBooks = async () => {
+      books.value = []
+      await getAllBooks()
     }
 
     const clearBookFormdata = () => {
@@ -193,6 +200,9 @@ export const useBookStore = defineStore(
       bookFormData.imageUrl = ''
       bookFormData.createdAt = new Date().toISOString()
       bookFormData.updatedAt = null
+      if ('bookId' in bookFormData) {
+        delete (bookFormData as any).bookId
+      }
     }
 
     const clearError = () => {
@@ -205,6 +215,18 @@ export const useBookStore = defineStore(
       }
       imagePreview.value = ''
       bookFormData.imageUrl = ''
+    }
+
+    const clearBookState = () => {
+      books.value = []
+      book.value = null
+      isLoading.value = false
+      errorMessage.value = null
+      validationErrors.value = {}
+      imagePreview.value = ''
+      clearBookFormdata()
+      clearError()
+      clearImage()
     }
 
     return {
@@ -228,6 +250,8 @@ export const useBookStore = defineStore(
       clearBookFormdata,
       clearImage,
       validate,
+      clearBookState,
+      refreshBooks,
     }
   },
   {

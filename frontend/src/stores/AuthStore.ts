@@ -16,6 +16,7 @@ export const useAuthStore = defineStore(
     const showPassword = ref<boolean>(false)
     const showConfirmPassword = ref<boolean>(false)
     const userChecked = ref<boolean>(false)
+    const isAuthenticating = ref<boolean>(false)
 
     const isLoggedIn = computed<boolean>(() => !!user.value)
 
@@ -82,19 +83,37 @@ export const useAuthStore = defineStore(
       showConfirmPassword.value = false
     }
 
+    const clearAuthState = () => {
+      user.value = null
+      userId.value = null
+      userChecked.value = false
+      isAuthenticating.value = false
+      resetFormData()
+    }
+
     const getCurrentUser = async () => {
-      if (userChecked.value && !user.value) {
-        return
+      if (isAuthenticating.value) {
+        return !!user.value
       }
+
+      if (userChecked.value) {
+        return !!user.value
+      }
+
+      isAuthenticating.value = true
 
       try {
         const response = await api.get('/api/user', { withCredentials: true })
         userId.value = response.data.id
         user.value = response.data as User
         userChecked.value = true
+        return true
       } catch (error) {
-        user.value = null
-        userId.value = null
+        console.log('User authentication failed:', error)
+        clearAuthState()
+        return false
+      } finally {
+        isAuthenticating.value = false
       }
     }
 
@@ -107,20 +126,30 @@ export const useAuthStore = defineStore(
       errorMessage.value = null
 
       try {
-        const response = await axios.post('/api/signup', {
+        const response = await api.post('/api/signup', {
           name: `${registerFormData.value.firstName} ${registerFormData.value.lastName}`,
           email: registerFormData.value.email,
           password: registerFormData.value.password,
         })
-        isLoading.value = false
+
         resetFormData()
         router.push({ name: 'login' })
         console.log('Signup successful:', response.data)
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Signup error:', error)
+
+        // Better error handling
+        if (error.response?.data?.message) {
+          errorMessage.value = error.response.data.message
+        } else if (error.response?.status === 500) {
+          errorMessage.value = 'Server error occurred. Please try again later.'
+        } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+          errorMessage.value = 'Network error. Please check your connection and try again.'
+        } else {
+          errorMessage.value = 'Signup failed. Please try again.'
+        }
+      } finally {
         isLoading.value = false
-        errorMessage.value = axios.isAxiosError(error)
-          ? error.response?.data?.message
-          : 'Signup failed. Please try again.'
       }
     }
 
@@ -142,34 +171,48 @@ export const useAuthStore = defineStore(
           },
           { withCredentials: true },
         )
-        await getCurrentUser()
+        const isAuthenticated = await getCurrentUser()
 
-        // user.value = response.data.user as User
-        // userId.value = response.data.user.id.toString()
+        if (!isAuthenticated) throw new Error('Failed to get user information after login')
+
         resetFormData()
         console.log('Login successful:', response.data)
+
+        const redirect = router.currentRoute.value.query.redirect as string
+        if (redirect && redirect !== '/auth/login') {
+          router.push(redirect)
+        } else {
+          router.push({ name: 'books' })
+        }
+      } catch (error: any) {
+        console.error('Login error:', error)
+
+        // Better error handling
+        if (error.response?.data?.message) {
+          errorMessage.value = error.response.data.message
+        } else if (error.response?.status === 500) {
+          errorMessage.value = 'Server error occurred. Please try again later.'
+        } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+          errorMessage.value = 'Network error. Please check your connection and try again.'
+        } else if (error.response?.status === 401) {
+          errorMessage.value = 'Invalid email or password.'
+        } else {
+          errorMessage.value = 'Login failed. Please try again.'
+        }
+      } finally {
         isLoading.value = false
-        router.push({ name: 'books' })
-      } catch (error) {
-        isLoading.value = false
-        errorMessage.value = axios.isAxiosError(error)
-          ? error.response?.data?.message
-          : 'Login failed. Please try again.'
       }
     }
 
     const logout = async () => {
       try {
         await api.post('/api/logout', {}, { withCredentials: true })
-        user.value = null
-        userChecked.value = false
-        userId.value = null
-        resetFormData()
         router.push({ name: 'login' })
       } catch (error) {
-        errorMessage.value = axios.isAxiosError(error)
-          ? error.response?.data?.message
-          : 'Logout failed. Please try again.'
+        console.log('Logout API call failed:', error)
+      } finally {
+        clearAuthState()
+        router.push({ name: 'login' })
       }
     }
 
@@ -187,16 +230,18 @@ export const useAuthStore = defineStore(
       isLoginFormValid,
       user,
       userChecked,
-      handleSignup,
-      handleLogin,
+      isAuthenticating,
+      clearAuthState,
       resetFormData,
       getCurrentUser,
+      handleSignup,
+      handleLogin,
       logout,
     }
   },
   {
     persist: {
-      pick: ['user'],
+      pick: ['user', 'userChecked'],
     },
   },
 )

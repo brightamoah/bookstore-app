@@ -133,7 +133,7 @@ public class BooksController(IBookRepository repository, IImageRepository imageR
             });
         }
 
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || string.IsNullOrEmpty(book.Author))
         {
             var validationErrors = ModelState
                 .Where(x => x.Value?.Errors.Count > 0)
@@ -141,6 +141,11 @@ public class BooksController(IBookRepository repository, IImageRepository imageR
                     kvp => kvp.Key,
                     kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? []
                 );
+
+            if (string.IsNullOrEmpty(book.Author))
+            {
+                validationErrors["Author"] = ["Author is required"];
+            }
 
             return BadRequest(new ValidationErrorResponse
             {
@@ -177,6 +182,10 @@ public class BooksController(IBookRepository repository, IImageRepository imageR
 
                 book.ImageUrl = await _imageRepository.SaveImageAsync(book.ImageUrl);
             }
+            else if (string.IsNullOrEmpty(book.ImageUrl))
+            {
+                book.ImageUrl = existingBook.ImageUrl;
+            }
 
             await _repository.UpdateBookAsync(book);
 
@@ -193,12 +202,23 @@ public class BooksController(IBookRepository repository, IImageRepository imageR
                 TraceId = HttpContext.TraceIdentifier
             });
         }
-        catch (Exception)
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new ErrorResponse
+            {
+                Message = "Book not found. Please check the book ID and try again.",
+                ErrorCode = ErrorCodes.BOOK_NOT_FOUND,
+                Details = ex.Message,
+                TraceId = HttpContext.TraceIdentifier
+            });
+        }
+        catch (Exception ex)
         {
             return StatusCode(500, new ErrorResponse
             {
                 Message = "Book update failed due to a server error",
                 ErrorCode = ErrorCodes.BOOK_UPDATE_FAILED,
+                Details = ex.Message,
                 TraceId = HttpContext.TraceIdentifier
             });
         }

@@ -119,3 +119,5 @@ WHERE
         27,
         28
     );
+
+SELECT COUNT(*) FROM books LIMIT 100

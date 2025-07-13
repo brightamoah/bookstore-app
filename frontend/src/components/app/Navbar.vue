@@ -45,7 +45,7 @@ const isActiveRoute = (path: _RouteRecordBase['path']) => {
 
 <template>
   <header
-    class="top-0 z-50 sticky flex justify-between items-center shadow-md backdrop-blur-xl p-4 rounded-md w-full max-w-screen"
+    class="top-0 z-50 sticky flex justify-between items-center bg-default/80 shadow-md backdrop-blur-xs p-4 rounded-md w-full max-w-screen"
   >
     <section>
       <RouterLink to="/">

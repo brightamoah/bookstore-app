@@ -4,7 +4,7 @@ import { useSearchStore } from '@/stores/SearchStore'
 import type { Book } from '@/Types/types'
 import { useDateFormat, useEventListener } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { nextTick, ref, useTemplateRef } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -70,8 +70,6 @@ useEventListener('keydown', handleKeydown)
 
 <template>
   <UModal
-    description="Search for books by title, author, or category"
-    title="Search Books"
     v-model:open="isOpen"
     :ui="{ footer: 'justify-end', overlay: 'backdrop-blur-sm' }"
     class="z-90"
@@ -134,7 +132,7 @@ useEventListener('keydown', handleKeydown)
               variant="ghost"
               size="xs"
               icon="i-lucide-x"
-              class="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+              class="rounded-full"
               :ui="{ base: 'h-6 w-6' }"
             />
           </div>
@@ -172,7 +170,7 @@ useEventListener('keydown', handleKeydown)
               v-for="book in searchResults"
               :key="book.bookId || book.id"
               @click="goToBook(book.bookId)"
-              class="group flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 p-4 transition-colors cursor-pointer"
+              class="group flex items-start gap-4 hover:bg-gray-50 dark:hover:bg-muted p-4 rounded-lg transition-colors cursor-pointer"
             >
               <!-- Book Cover -->
               <div class="flex-shrink-0">

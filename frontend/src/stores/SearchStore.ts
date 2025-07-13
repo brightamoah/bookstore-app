@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import type { SearchResult } from '@/Types/types'
 import { defineStore, acceptHMRUpdate } from 'pinia'
+import type { AxiosError } from 'axios'
 
 export const useSearchStore = defineStore(
   'SearchStore',
@@ -51,15 +52,15 @@ export const useSearchStore = defineStore(
             delete searchCache.value[key]
           })
         }
-      } catch (error) {
-        if (typeof error === 'object' && error !== null && 'response' in error) {
-          // @ts-expect-error: error type is unknown, but we expect response here
-          searchError.value = error.response?.data?.message || 'Search failed'
-        } else {
-          searchError.value = 'Search failed'
-        }
-        searchResults.value = []
+      } catch (error: any) {
         console.error('Search error:', error)
+        if (error.response?.status === 401) {
+          searchError.value = 'Session expired. Please log in again.'
+          searchResults.value = []
+        } else {
+          searchError.value = error.response?.data?.message || 'Search failed'
+          searchResults.value = []
+        }
       } finally {
         isSearching.value = false
       }
@@ -101,11 +102,23 @@ export const useSearchStore = defineStore(
         })
         return response.data as SearchResult
       } catch (error: any) {
-        searchError.value = error.response?.data?.message || 'Search failed'
+        if (error.response?.status === 401) {
+          searchError.value = 'Session expired. Please log in again.'
+        } else {
+          searchError.value = error.response?.data?.message || 'Search failed'
+        }
         throw error
       } finally {
         isSearching.value = false
       }
+    }
+
+    const clearSearchState = () => {
+      searchQuery.value = ''
+      searchResults.value = []
+      isSearching.value = false
+      searchError.value = null
+      searchCache.value = {}
     }
 
     return {
@@ -123,6 +136,7 @@ export const useSearchStore = defineStore(
       clearSearch,
       clearCache,
       searchWithPagination,
+      clearSearchState,
     }
   },
   {

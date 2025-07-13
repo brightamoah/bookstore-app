@@ -35,7 +35,7 @@ public class JwtService
             audience: _audience,
             claims: claims,
             notBefore: DateTime.UtcNow,
-            expires: DateTime.UtcNow.AddHours(1)
+            expires: DateTime.UtcNow.AddDays(1)
         );
 
         var securityToken = new JwtSecurityToken(jwtHeader, jwtPayload);
@@ -58,7 +58,7 @@ public class JwtService
                 ValidAudience = _audience,
                 ValidateAudience = true,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.FromMinutes(5)
             }, out SecurityToken validatedToken);
 
             return validatedToken as JwtSecurityToken;

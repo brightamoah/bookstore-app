@@ -7,7 +7,7 @@ const { errorMessage = 'Success' } = defineProps<{
 <template>
   <div v-auto-animate class="flex justify-center items-center">
     <UAlert
-      v-if="errorMessage !== '' && errorMessage !== null"
+      v-if="errorMessage && errorMessage.trim() !== ''"
       variant="subtle"
       color="error"
       :description="errorMessage"
