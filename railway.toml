@@ -1,0 +1,18 @@
+# Railway configuration
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[[services]]
+name = "bookstore-api"
+
+[services.variables]
+ASPNETCORE_ENVIRONMENT = "Production"
+ASPNETCORE_URLS = "http://*:$PORT"
+JWT_SECRET = "your-super-secret-jwt-key-at-least-32-characters-long"
+JWT_ISSUER = "BookstoreApi"
+JWT_AUDIENCE = "BookstoreClient"
