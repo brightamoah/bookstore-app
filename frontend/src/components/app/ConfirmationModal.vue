@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { VisuallyHidden } from 'reka-ui'
 import { computed, ref, watch } from 'vue'
 import type { Book } from '@/Types/types'
-import { getImageUrl } from '@/services/Api'
 
 const props = defineProps<{
   actionType: 'delete' | 'clear' | 'remove'
