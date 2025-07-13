@@ -33,11 +33,9 @@ const fetchBook = async () => {
 const handleEditClick = (book: Book) => {
   selectedBook.value = book
   showEditModal.value = true
-  console.log('Edit book', book)
 }
 
 const retryFetch = () => {
-  console.log('Retrying fetch for book ID:', bookId)
   fetchBook()
 }
 

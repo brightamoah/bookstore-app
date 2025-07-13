@@ -152,7 +152,6 @@ watch(currentPage, () => {
 
 const loadBooks = async () => {
   if (!isLoggedIn.value && !user.value) {
-    console.log('User not authenticated, redirecting to login')
     router.push({
       name: 'login',
       query: {
@@ -190,7 +189,6 @@ const loadBooks = async () => {
 
 const retryLoadBooks = async () => {
   if (!isLoggedIn.value && !user.value) {
-    console.log('User not authenticated, redirecting to login')
     router.push({
       name: 'login',
       query: {
@@ -236,7 +234,7 @@ onMounted(async () => {
 })
 
 const handleBookSubmitted = (book: Omit<Book, 'id'>) => {
-  console.log('Book submitted:', book)
+  // Book submission handled
 }
 
 const handleSuccess = (message: string) => {

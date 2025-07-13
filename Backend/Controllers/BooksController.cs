@@ -1,4 +1,5 @@
 using Backend.Data;
+using Backend.DataTransferObjects;
 using Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -60,7 +61,7 @@ public class BooksController(IBookRepository repository, IImageRepository imageR
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateBook([FromBody] Book book)
+    public async Task<IActionResult> CreateBook([FromBody] BookDto bookDto)
     {
         if (!ModelState.IsValid)
         {
@@ -82,6 +83,17 @@ public class BooksController(IBookRepository repository, IImageRepository imageR
 
         try
         {
+            // Convert DTO to model
+            var book = new Book
+            {
+                BookName = bookDto.BookName,
+                Category = bookDto.Category,
+                Author = bookDto.Author,
+                Price = bookDto.Price,
+                Description = bookDto.Description,
+                ImageUrl = bookDto.ImageUrl
+            };
+
             if (!string.IsNullOrEmpty(book.ImageUrl) && book.ImageUrl.StartsWith("data:image"))
             {
                 book.ImageUrl = await _imageRepository.SaveImageAsync(book.ImageUrl);

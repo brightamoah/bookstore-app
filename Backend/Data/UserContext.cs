@@ -3,10 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Data
 {
-    public class UserContext(DbContextOptions<UserContext> options) : DbContext(options)
+    public class UserContext : DbContext
     {
-        public required DbSet<User> Users { get; set; }
-        public required DbSet<Book> Books { get; set; }
+        public UserContext(DbContextOptions<UserContext> options) : base(options)
+        {
+        }
+
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Book> Books { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

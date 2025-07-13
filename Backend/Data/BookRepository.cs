@@ -13,7 +13,7 @@ public class BookRepository(UserContext context) : IBookRepository
         book.CreatedAt = DateTime.UtcNow;
         book.UpdatedAt = null;
         _context.Books.Add(book);
-        book.BookId = await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
         return book;
     }
 

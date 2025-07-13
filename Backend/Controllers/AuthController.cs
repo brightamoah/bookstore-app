@@ -10,10 +10,11 @@ namespace Backend.Controllers
 
     [Route("api")]
     [ApiController]
-    public class AuthController(IUserRepository repository, JwtService jwtService) : Controller
+    public class AuthController(IUserRepository repository, IJwtService jwtService, IWebHostEnvironment environment) : Controller
     {
         private readonly IUserRepository _repository = repository;
-        private readonly JwtService _jwtService = jwtService;
+        private readonly IJwtService _jwtService = jwtService;
+        private readonly IWebHostEnvironment _environment = environment;
 
         [HttpPost("signup")]
         public async Task<IActionResult> Signup(SignupDto dto)
@@ -141,13 +142,16 @@ namespace Backend.Controllers
 
                 var jwt = _jwtService.GenerateToken(user.Id);
 
-                Response.Cookies.Append("jwtToken", jwt, new CookieOptions
+                // Configure cookie options based on environment
+                var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
+                    Secure = _environment.IsProduction(), // Only secure in production
                     SameSite = SameSiteMode.Strict,
                     Expires = DateTime.UtcNow.AddDays(1)
-                });
+                };
+
+                Response.Cookies.Append("jwtToken", jwt, cookieOptions);
 
                 return Ok(new
                 {

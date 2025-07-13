@@ -31,7 +31,7 @@ namespace Backend
             services.AddHttpContextAccessor();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IBookRepository, BookRepository>();
-            services.AddScoped<JwtService>();
+            services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IImageRepository, ImageRepository>();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();

@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Backend.Helpers;
 
-public class JwtService
+public class JwtService : IJwtService
 {
     private readonly string _key;
     private readonly string _issuer;

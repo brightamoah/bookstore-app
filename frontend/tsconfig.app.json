@@ -1,8 +1,9 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "include": [
+    "env.d.ts",
     "src/**/*.ts",
-    "src/**/*.tsx",
+    "src/**/*",
     "src/**/*.vue",
     "auto-imports.d.ts",
     "components.d.ts"
