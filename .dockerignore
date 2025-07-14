@@ -1,0 +1,105 @@
+# Version control
+.git/
+.gitignore
+
+# IDE/editor config
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# C#/.NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+/dist/
+/build/
+/out/
+
+# Test and coverage artifacts
+__tests__/
+*.test.ts
+*.test.js
+*.test.jsx
+*.test.tsx
+*.spec.ts
+*.spec.js
+*.spec.jsx
+*.spec.tsx
+coverage/
+.coverage
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.crt
+
+# Local development
+.local/
+local/
+
+# Documentation
+*.md
+README*
+DEPLOYMENT.md
+docs/
+
+# Docker files (ignore only extra Dockerfiles, not the main Dockerfile)
+Dockerfile*
+docker-compose*
+
+# Miscellaneous
+*.log
+*.bak
+*.old
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Project-specific
+Database/
+Docker/
+
+# Exclude frontend build output if present (e.g., Vue/React)
+frontend/dist/
+
+# Exclude uploads except for .gitkeep (if needed)
+Backend/wwwroot/uploads/*
+!Backend/wwwroot/uploads/.gitkeep
+
+# Exclude test projects from Docker build context
+Backend.Tests/
+
+# Exclude solution and session files
+*.sln
+*.session.sql
+
+# Exclude editor config
+.editorconfig
+.gitattributes
+
+# Exclude workflow and CI/CD config
+.github/
+.railway.toml
+
+# Exclude empty directories (optional, Docker ignores them by default)
