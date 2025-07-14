@@ -1,65 +1,124 @@
-## Running the Project with Docker
+# BookStoreApp - Local Development Guide
 
-This project provides Dockerfiles for both the backend (C#/.NET) and frontend (TypeScript/Vue) applications, as well as a `docker-compose.yml` to orchestrate the backend, frontend, and MySQL database services.
+This guide provides instructions for setting up and running the BookStoreApp
+locally on your development machine.
 
-### Project-Specific Requirements
+## Prerequisites
 
-- **Backend**: .NET 8.0 (as specified in the Dockerfile and `backend.csproj`)
-- **Frontend**: Node.js 22.13.1 (as specified in the Dockerfile)
-- **Database**: MySQL (latest)
+-  **Backend**: .NET 8.0 SDK
+   ([download](https://dotnet.microsoft.com/download/dotnet/8.0))
+-  **Frontend**: Node.js 18.x or higher ([download](https://nodejs.org/))
+-  **Database**: MySQL Server
+   ([download](https://dev.mysql.com/downloads/mysql/))
 
-### Required Environment Variables
+## Database Setup
 
-The backend service requires several environment variables for proper operation:
-
-- `ASPNETCORE_ENVIRONMENT` (default: `Production`)
-- `DATABASE_URL` (connection string for MySQL, e.g., `server=mysql-db;port=3306;database=bookstore;user=root;password=example`)
-- `JWT_SECRET` (a secure, 32+ character string for JWT authentication)
-- `JWT_ISSUER` (e.g., `BookstoreApi`)
-- `JWT_AUDIENCE` (e.g., `BookstoreClient`)
-
-Set these in a `.env` file or via your deployment platform. The compose file includes commented examples for reference.
-
-The frontend can also use a `.env` file for configuration if needed.
-
-### Build and Run Instructions
-
-1. **Clone the repository** and ensure Docker and Docker Compose are installed.
-2. **(Optional)** Create a `.env` file in the `./Backend` directory with the required environment variables for the backend.
-3. **(Optional)** Create a `.env` file in the `./frontend` directory for frontend configuration if needed.
-4. **Build and start all services:**
-
-   ```sh
-   docker compose up --build
+1. **Start MySQL Server** - Make sure MySQL is installed and running on your
+   machine
+2. **Create the database**:
+   ```sql
+   CREATE DATABASE bookstore;
    ```
 
-   This will build and start the backend, frontend, and MySQL database containers.
+## Backend Setup
 
-### Special Configuration Notes
+1. **Navigate to the Backend directory**:
 
-- The backend expects a MySQL database and uses environment variables for connection and JWT configuration.
-- The backend's uploads directory (`/app/wwwroot/uploads`) is created and made writable by the Dockerfile.
-- The MySQL root password and user credentials are set in the compose file. **Change these for production deployments!**
-- Database data is not persisted by default. Uncomment the `volumes` section in the compose file to enable data persistence.
-- The frontend is served as a static site using the `serve` package on port 4000.
-- The frontend expects the backend API to be available at `http://localhost:8080` (adjust as needed for your deployment).
+   ```bash
+   cd Backend
+   ```
 
-### Ports Exposed
+2. **Update appsettings.Development.json** with your MySQL connection:
 
-- **Backend (csharp-backend):** `8080` (API and Swagger UI)
-- **Frontend (typescript-frontend):** `4000` (static site)
-- **MySQL (mysql-db):** `3306` (for local development; remove or restrict in production)
+   ```json
+   {
+      "Logging": {
+         "LogLevel": {
+            "Default": "Information",
+            "Microsoft.AspNetCore": "Warning"
+         }
+      },
+      "ConnectionStrings": {
+         "DefaultConnection": "server=localhost;port=3306;database=bookstore;user=root;password=YOUR_MYSQL_PASSWORD"
+      },
+      "Jwt": {
+         "Key": "VeryLongAndSecureKeyForJwt12458910-this-should-be-at-least-32-characters-long",
+         "Issuer": "BookstoreApi",
+         "Audience": "BookstoreClient"
+      }
+   }
+   ```
 
-### Example `.env` for Backend
+   Make sure to replace `YOUR_MYSQL_PASSWORD` with your actual MySQL password.
 
-```
-ASPNETCORE_ENVIRONMENT=Production
-DATABASE_URL=server=mysql-db;port=3306;database=bookstore;user=root;password=example
-JWT_SECRET=your-super-secret-jwt-key-32-characters
-JWT_ISSUER=BookstoreApi
-JWT_AUDIENCE=BookstoreClient
-```
+3. **Start the backend**:
 
----
+   ```bash
+   dotnet run --urls="http://localhost:8080"
+   ```
 
-_Refer to the `DEPLOYMENT.md` for more advanced deployment options and details._
+4. The backend API will be available at `http://localhost:8080`
+
+## Frontend Setup
+
+1. **Navigate to the frontend directory**:
+
+   ```bash
+   cd frontend
+   ```
+
+2. **Install dependencies**:
+
+   ```bash
+   npm install
+   ```
+
+3. **Create a `.env` file** (optional) with the following content:
+
+   ```
+   VITE_API_URL=http://localhost:8080
+   ```
+
+4. **Start the development server**:
+
+   ```bash
+   npm run dev
+   ```
+
+5. The frontend will be available at `http://localhost:4000`
+
+## Testing the Application
+
+1. Make sure both backend and frontend servers are running
+2. Open your browser and navigate to `http://localhost:4000`
+3. Register a new user account or use the default test account:
+   -  Email: `admin@example.com`
+   -  Password: `Password123!`
+
+## Unit Testing
+
+1. **Backend Tests**: Navigate to the `Backend.Test` directory and run:
+
+   ```bash
+   dotnet test
+   ```
+
+2. **Frontend Tests**: Navigate to the `frontend` directory and run:
+
+   ```bash
+   npm run test
+   ```
+
+## Troubleshooting
+
+-  **Backend Connection Issues**: Ensure your MySQL server is running and the
+   connection string in `appsettings.Development.json` is correct
+-  **Frontend API Connectivity**: Check that the backend is running on port 8080
+   and that your `.env` file has the correct API URL
+-  **Image Upload Problems**: Ensure the `wwwroot/uploads` directory exists and
+   has write permissions
+
+## Known Issues
+
+-  When updating a book with a large image, you may encounter errors. Try using
+   smaller images or avoid changing the image when updating book details.
