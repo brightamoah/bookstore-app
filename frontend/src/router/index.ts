@@ -13,7 +13,7 @@ const router = createRouter({
     {
       path: '/books',
       name: 'books',
-      component: () => import('../views/Books.vue'),
+      component: () => import('../views/books/Books.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -31,6 +31,11 @@ const router = createRouter({
       component: () => import('../views/books/BookDetails.vue'),
       path: '/books/:id',
       meta: { requiresAuth: true },
+    },
+    {
+      name: 'drag-and-drop',
+      path: '/drag-and-drop',
+      component: () => import('../views/DragAndDrop.vue'),
     },
   ],
 })

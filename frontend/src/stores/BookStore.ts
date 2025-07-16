@@ -1,14 +1,6 @@
 import api from '@/services/Api'
 import type { Book, ValidationErrors } from '@/Types/types'
-import {
-  validateAuthor,
-  validateBookName,
-  validateCategory,
-  validateDescription,
-  validateForm,
-  validateImageUrl,
-  validatePrice,
-} from '@/utils/validations'
+import { validateForm } from '@/utils/validations'
 import type { FormError } from '@nuxt/ui'
 import { defineStore, acceptHMRUpdate } from 'pinia'
 import { computed, reactive, ref } from 'vue'
@@ -22,6 +14,7 @@ export const useBookStore = defineStore(
     const errorMessage = ref<string | null>(null)
     const validationErrors = ref<ValidationErrors>({})
     const imagePreview = ref<string>('')
+    const booksLoaded = ref<boolean>(false)
     const bookFormData = reactive<Omit<Book, 'bookId'> & { bookId?: number }>({
       bookName: '',
       category: 'Fiction',
@@ -81,16 +74,27 @@ export const useBookStore = defineStore(
     }
 
     const getAllBooks = async () => {
+      if (isLoading.value) {
+        console.log('Books already being fetched, skipping duplicate call')
+        return books.value
+      }
+
+      if (booksLoaded.value && books.value.length > 0) {
+        console.log('Books already loaded, returning cached data')
+        return books.value
+      }
       isLoading.value = true
       errorMessage.value = null
 
       try {
         const response = await api.get('/api/books')
         books.value = response.data
+        booksLoaded.value = true
         console.log('Books fetched successfully')
         return response.data
       } catch (err: any) {
         errorMessage.value = err.response?.data?.message || 'Failed to fetch books'
+        booksLoaded.value = false
         throw err
       } finally {
         isLoading.value = false
@@ -120,23 +124,21 @@ export const useBookStore = defineStore(
         throw new Error('Form validation failed' + errors.map((e) => e.message).join(', '))
       }
 
-      errorMessage.value = null
-
       try {
         const response = await api.post('/api/books', bookFormData)
-        const newBook = response.data
-        books.value.push(newBook)
+        newBook = response.data
+        books.value.unshift(newBook)
         console.log('Book created successfully', newBook)
         return newBook
       } catch (err: any) {
-        errorMessage.value = err.response?.data?.message || 'Failed to create book'
+        console.error('Create book error:', err)
         throw err
       }
     }
 
     const updateBook = async (id: Book['bookId'], bookData: Partial<Book>) => {
       isLoading.value = true
-      errorMessage.value = null
+      // errorMessage.value = null
 
       try {
         const updateData = {
@@ -163,7 +165,8 @@ export const useBookStore = defineStore(
 
         return updatedBook
       } catch (err: any) {
-        errorMessage.value = err.response?.data?.message || 'Failed to update book'
+        // errorMessage.value = err.response?.data?.message || 'Failed to update book'
+        console.error('Update book error:', err)
         throw err
       } finally {
         isLoading.value = false
@@ -187,8 +190,13 @@ export const useBookStore = defineStore(
     }
 
     const refreshBooks = async () => {
+      if (isLoading.value) {
+        console.log('Books already being fetched, skipping duplicate call')
+        return books.value
+      }
+      booksLoaded.value = false
       books.value = []
-      await getAllBooks()
+      return await getAllBooks()
     }
 
     const clearBookFormdata = () => {
@@ -240,6 +248,7 @@ export const useBookStore = defineStore(
       imagePreview,
       isFormValid,
       validationErrors,
+      booksLoaded,
       handleFileChange,
       getAllBooks,
       getBookById,

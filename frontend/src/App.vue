@@ -19,7 +19,6 @@ onMounted(async () => {
 
 watch([isLoggedIn, user], async ([newIsLoggedIn, newUser], [oldIsLoggedIn, oldUser]) => {
   if (!newIsLoggedIn && !newUser && (oldIsLoggedIn || oldUser)) {
-    // User logged out, redirect to login
     console.log('User logged out, redirecting to login')
     router.push({
       name: 'login',
@@ -27,10 +26,6 @@ watch([isLoggedIn, user], async ([newIsLoggedIn, newUser], [oldIsLoggedIn, oldUs
         redirect: '/books',
       },
     })
-  } else if ((newIsLoggedIn || newUser) && !(oldIsLoggedIn || oldUser)) {
-    // User logged in, load books
-    console.log('User logged in, loading books')
-    await bookStore.refreshBooks()
   }
 })
 
@@ -40,7 +35,7 @@ const FooterComponentLazy = defineAsyncComponent({
 </script>
 
 <template>
-  <UApp>
+  <UApp :toaster="{ position: 'top-right', duration: 8000 }">
     <div>
       <Navbar />
       <RouterView v-if="isLoaded" />

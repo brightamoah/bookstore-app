@@ -5,6 +5,7 @@ import { useDateFormat } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useBookStore } from '@/stores/BookStore'
 import { getImageUrl } from '@/services/Api'
+import { showToast } from '@/utils/toastHandler'
 
 const route = useRoute()
 const bookStore = useBookStore()
@@ -215,6 +216,13 @@ onMounted(() => {
       :book="selectedBook"
       @success="handleBookUpdated"
       @error="handleUpdateError"
+    />
+
+    <UButton
+      label="Show Toast"
+      @click="
+        showToast({ title: 'Success', description: 'Book updated successfully', color: 'success' })
+      "
     />
   </div>
 </template>

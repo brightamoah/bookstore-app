@@ -51,6 +51,7 @@ const validateAuthor = (value: string): string => {
     return 'Author name must not exceed 50 characters'
   }
   // Check for valid author name format (letters, spaces, hyphens, apostrophes)
+  // oxlint-disable-next-line no-useless-escape
   const authorRegex = /^[a-zA-Z\s\-'\.]+$/
   if (!authorRegex.test(value.trim())) {
     return 'Author name can only contain letters, spaces, hyphens, and apostrophes'
@@ -150,7 +151,7 @@ export const validateForm = (state: any): FormError[] => {
     errors.push({ name: 'author', message: 'Author name must be at least 2 characters long' })
   } else if (state.author.trim().length > 50) {
     errors.push({ name: 'author', message: 'Author name must not exceed 50 characters' })
-  } else if (!/^[a-zA-Z\s\-'\.]+$/.test(state.author.trim())) {
+  } else if (!/^[a-zA-Z\s\-'.]+$/.test(state.author.trim())) {
     errors.push({
       name: 'author',
       message: 'Author name can only contain letters, spaces, hyphens, and apostrophes',

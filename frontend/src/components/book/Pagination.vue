@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+
 defineProps<{
   currentPageFirst: number
   currentPageLast: number
   totalBooks: number
   pageSize: number
   pageSizeOptions: Array<{ label: string; value: number }>
+  isLoading: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   'update:pageSize': [value: number]
 }>()
 </script>
@@ -26,7 +29,7 @@ defineEmits<{
           :model-value="pageSize"
           :items="pageSizeOptions"
           size="sm"
-          @update:model-value="$emit('update:pageSize', $event)"
+          @update:model-value="emit('update:pageSize', $event)"
           class="cursor-pointer"
         />
       </div>

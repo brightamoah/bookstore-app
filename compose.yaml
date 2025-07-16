@@ -1,73 +1,67 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
 services:
-  csharp-backend:
+  server:
     build:
-      context: ./Backend
-      dockerfile: Dockerfile
-    container_name: csharp-backend
-    restart: unless-stopped
-    init: true
-    # The backend expects a MySQL database and uses environment variables for configuration
+      context: .
+      target: final
+    ports:
+      - 8080:8080
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
     environment:
-      # Set ASP.NET Core environment (override as needed)
-      - ASPNETCORE_ENVIRONMENT=Production
-      # The following are required for the backend to connect to the database and for JWT auth
-      # Set these in a .env file or via your deployment platform
-      # - DATABASE_URL=server=mysql-db;port=3306;database=bookstore;user=root;password=example
-      # - JWT_SECRET=your-super-secret-jwt-key-32-characters
-      # - JWT_ISSUER=BookstoreApi
-      # - JWT_AUDIENCE=BookstoreClient
-    # Uncomment the next line if you have a .env file with secrets
-    # env_file: ./Backend/.env  # Uncomment if .env file exists
+      MYSQL_ROOT_PASSWORD: "21Awesom_e"
+      MYSQL_DATABASE: "bookstore"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "21Awesom_e"
     ports:
-      - "8080:8080"  # Exposes backend API and Swagger
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-    networks:
-      - bookstore-net
+      - 3306:3306
+    volumes:
+      - mysql-data:/var/lib/mysql
 
-  typescript-frontend:
-    build:
-      context: ./frontend
-      dockerfile: ../frontendDockerfile
-    container_name: typescript-frontend
-    restart: unless-stopped
-    init: true
-    # Uncomment the next line if you have a .env file for frontend config
-    # env_file: ./frontend/.env  # Uncomment if .env file exists
-    ports:
-      - "4000:4000"  # Exposes the static frontend
-    networks:
-      - bookstore-net
-    # The frontend will call the backend at http://localhost:8080 (adjust as needed)
+volumes:
+  mysql-data:
 
-  mysql-db:
-    image: mysql:latest
-    container_name: mysql-db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: example  # Change this in production!
-      MYSQL_DATABASE: bookstore
-      MYSQL_USER: bookstore
-      MYSQL_PASSWORD: bookstorepass
-    ports:
-      - "3306:3306"  # Expose for local dev, remove in production
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - bookstore-net
-    # Uncomment the following to persist database data
+    # The commented out section below is an example of how to define a PostgreSQL
+    # database that your application can use. `depends_on` tells Docker Compose to
+    # start the database before your application. The `db-data` volume persists the
+    # database data between container restarts. The `db-password` secret is used
+    # to set the database password. You must create `db/password.txt` and add
+    # a password of your choosing to it before running `docker compose up`.
+    #     depends_on:
+    #       db:
+    #         condition: service_healthy
+    #   db:
+    #     image: postgres
+    #     restart: always
+    #     user: postgres
+    #     secrets:
+    #       - db-password
+    #     volumes:
+    #       - db-data:/var/lib/postgresql/data
+    #     environment:
+    #       - POSTGRES_DB=example
+    #       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    #     expose:
+    #       - 5432
+    #     healthcheck:
+    #       test: [ "CMD", "pg_isready" ]
+    #       interval: 10s
+    #       timeout: 5s
+    #       retries: 5
     # volumes:
-    #   - mysql-data:/var/lib/mysql
-
-networks:
-  bookstore-net:
-    driver: bridge
-
-# Uncomment the following if you want to persist MySQL data
-#volumes:
-#  mysql-data:
-#    driver: local
+    #   db-data:
+    # secrets:
+    #   db-password:
+    #     file: db/password.txt

@@ -1,6 +1,12 @@
 <template>
   <div class="min-h-screen">
-    <BookHeader @submit="handleBookSubmitted" @success="handleSuccess" @error="handleError" />
+    <BookHeader
+      :is-loading
+      @refresh-books="retryLoadBooks"
+      @submit="handleBookSubmitted"
+      @success="handleSuccess"
+      @error="handleError"
+    />
 
     <div class="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
       <div v-if="!isLoading && !errorMessage" class="mb-6">
@@ -9,6 +15,7 @@
           :current-page-last="currentPageLast"
           :total-books="totalBooks"
           :page-size="pageSize"
+          :is-loading="isLoading"
           :page-size-options="pageSizeOptions"
           @update:page-size="onPageSizeChange"
         />
@@ -57,9 +64,8 @@
 import { useBookStore } from '@/stores/BookStore'
 import { useAuthStore } from '@/stores/AuthStore'
 import type { Book } from '@/Types/types'
-import { get } from 'http'
 import { storeToRefs } from 'pinia'
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOffsetPagination } from '@vueuse/core'
 
@@ -68,12 +74,11 @@ const router = useRouter()
 const bookstore = useBookStore()
 const authStore = useAuthStore()
 const { user, isLoggedIn } = storeToRefs(authStore)
-const { books, isLoading, errorMessage, totalBooks, bookFormData } = storeToRefs(bookstore)
+const { books, isLoading, errorMessage, totalBooks, bookFormData, booksLoaded } =
+  storeToRefs(bookstore)
 const { getAllBooks, clearBookFormdata, deleteBook, clearError, refreshBooks } = bookstore
 
 const toast = useToast()
-
-const booksLoaded = ref(false)
 
 const pageSize = ref(6)
 const pageSizeOptions = [
@@ -161,7 +166,12 @@ const loadBooks = async () => {
     })
     return
   }
-  // if (booksLoaded.value && books.value.length > 0) return
+  if (books.value.length > 0 || isLoading.value) {
+    console.log('Books already loaded or loading, skipping duplicate call')
+    booksLoaded.value = true
+    return
+  }
+
   try {
     clearError()
     await getAllBooks()
@@ -174,6 +184,7 @@ const loadBooks = async () => {
         title: 'Authentication Required',
         description: 'Please log in to view books',
         color: 'error',
+        icon: 'i-heroicons-exclamation-triangle-solid',
       })
 
       router.push({
@@ -226,10 +237,13 @@ const retryLoadBooks = async () => {
 }
 
 onMounted(async () => {
+  await nextTick()
+
   if (books.value.length === 0 && !booksLoaded.value) {
     await loadBooks()
   } else {
     booksLoaded.value = true
+    console.log('Books already loaded, skipping fetch')
   }
 })
 
@@ -245,7 +259,8 @@ const handleSuccess = (message: string) => {
   })
   booksLoaded.value = false
   currentPage.value = 1
-  retryLoadBooks()
+  // showBookForm.value = false
+  // retryLoadBooks()
 }
 
 const handleError = (message: string) => {

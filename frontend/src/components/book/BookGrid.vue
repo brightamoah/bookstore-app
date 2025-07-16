@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getImageUrl } from '@/services/Api'
 import type { Book } from '@/Types/types'
+import { showToast } from '@/utils/toastHandler'
 import { ref } from 'vue'
 
 const props = defineProps<{
@@ -45,15 +46,15 @@ const cancelDelete = () => {
   showDeleteModal.value = false
 }
 
-const handleEditSuccess = (message: string) => {
-  console.log('Edit success:', message)
-  showEditModal.value = false
-  bookToEdit.value = null
-}
+// const handleEditSuccess = (message: string) => {
+//   console.log('Edit success:', message)
+//   showEditModal.value = false
+//   bookToEdit.value = null
+// }
 
-const handleEditError = (message: string) => {
-  console.error('Edit error:', message)
-}
+// const handleEditError = (message: string) => {
+//   console.error('Edit error:', message)
+// }
 </script>
 
 <template>
@@ -127,8 +128,6 @@ const handleEditError = (message: string) => {
         v-if="showEditModal && bookToEdit"
         :book="bookToEdit"
         v-model:open="showEditModal"
-        @success="handleEditSuccess"
-        @error="handleEditError"
       />
 
       <ConfirmationModal

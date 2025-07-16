@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useBookStore } from '@/stores/BookStore'
 import type { Book } from '@/Types/types'
+import { showToast } from '@/utils/toastHandler'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
@@ -13,13 +14,14 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'submit', book: Omit<Book, 'id'>): void
-  (e: 'success', message: string): void
-  (e: 'error', message: string): void
+  // (e: 'success', message: string): void
+  // (e: 'error', message: string): void
   (e: 'update:open', value: boolean): void
 }>()
 
 const formRef = ref<HTMLFormElement | null>(null)
 const isOpen = ref<boolean>(props.open || false)
+const originalBookData = ref<Book | null>(null)
 const bookstore = useBookStore()
 const { bookFormData, imagePreview, isLoading, validationErrors, isFormValid } =
   storeToRefs(bookstore)
@@ -47,6 +49,8 @@ const categories = [
 const isEditMode = computed<boolean>(() => !!props.book)
 
 const populateForm = (book: Book) => {
+  originalBookData.value = { ...book }
+
   bookFormData.value.bookName = book.bookName
   bookFormData.value.category = book.category
   bookFormData.value.author = book.author
@@ -59,6 +63,22 @@ const populateForm = (book: Book) => {
     ;(bookFormData.value as any).bookId = book.bookId
   }
 }
+
+const hasChanges = computed<boolean>(() => {
+  if (!originalBookData.value || !isEditMode.value) return true
+
+  const current = bookFormData.value
+  const original = originalBookData.value
+
+  return (
+    current.bookName?.trim() !== original.bookName ||
+    current.category !== original.category ||
+    current.author?.trim() !== original.author ||
+    Number(current.price) !== Number(original.price) ||
+    current.description?.trim() !== original.description ||
+    current.imageUrl !== original.imageUrl
+  )
+})
 
 const openModal = () => {
   isOpen.value = true
@@ -106,6 +126,17 @@ const handleBookSubmit = async (event: FormSubmitEvent<typeof bookFormData>) => 
     let successMessage = ''
 
     if (isEditMode.value && props.book) {
+      if (!hasChanges.value) {
+        showToast({
+          title: 'No Changes',
+          description: 'No changes detected. Nothing to update.',
+          color: 'warning',
+          icon: 'i-lucide-alert-triangle',
+        })
+        isLoading.value = false
+        return
+      }
+
       const updateData = {
         bookId: props.book.bookId,
         bookName: bookFormData.value.bookName.trim(),
@@ -123,14 +154,31 @@ const handleBookSubmit = async (event: FormSubmitEvent<typeof bookFormData>) => 
       result = await updateBook(props.book.bookId, updateData)
 
       successMessage = 'Book updated successfully!'
+      showToast({
+        title: 'Success',
+        description: successMessage,
+        color: 'success',
+        icon: 'i-lucide-check-circle',
+      })
     } else {
       result = await createBook(bookFormData.value as Omit<Book, 'id'>)
       successMessage = 'Book added successfully!'
+      showToast({
+        title: 'Success',
+        description: successMessage,
+        color: 'success',
+        icon: 'i-lucide-check-circle',
+      })
     }
 
-    emit('success', successMessage)
-    closeModal()
+    // emit('success', successMessage)
+    clearBookFormdata()
+    clearImage()
+    setTimeout(() => {
+      closeModal()
+    }, 200)
   } catch (error: any) {
+    const errorTitle = isEditMode.value ? 'Book Update Error' : 'Book Creation Error'
     console.error(`Error ${isEditMode.value ? 'updating' : 'creating'} book:`, error)
 
     const errorMessage =
@@ -138,7 +186,12 @@ const handleBookSubmit = async (event: FormSubmitEvent<typeof bookFormData>) => 
       error.message ||
       `Failed to ${isEditMode.value ? 'update' : 'create'} book`
 
-    emit('error', errorMessage)
+    showToast({
+      title: errorTitle,
+      description: errorMessage,
+      color: 'error',
+      icon: 'i-lucide-alert-triangle',
+    })
   } finally {
     isLoading.value = false
   }

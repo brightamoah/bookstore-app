@@ -1,6 +1,5 @@
 import api from '@/services/Api'
 import type { AuthData, User } from '@/Types/types'
-import axios from 'axios'
 import { defineStore, acceptHMRUpdate } from 'pinia'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
