@@ -76,7 +76,7 @@
               color="primary"
               variant="solid"
               size="lg"
-              class="justify-center items-center shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:shadow-xl rounded-2xl w-full sm:w-auto font-semibold text-base transition-all hover:-translate-y-1 ellipsis"
+              class="justify-center items-center shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:shadow-xl rounded-full w-full sm:w-auto font-semibold text-base transition-all hover:-translate-y-1 ellipsis"
               trailing-icon="i-lucide-arrow-right"
             >
               <span class="hidden sm:inline">Browse All Books</span>
@@ -88,7 +88,7 @@
               color="white"
               variant="outline"
               size="lg"
-              class="justify-center items-center hover:bg-primary/5 dark:hover:bg-primary/20 border-2 border-primary dark:border-primary rounded-2xl w-full sm:w-auto font-semibold text-primary text-base transition-all hover:-translate-y-1"
+              class="justify-center items-center hover:bg-primary/5 dark:hover:bg-primary/20 border-2 border-primary dark:border-primary rounded-full w-full sm:w-auto font-semibold text-primary text-base transition-all hover:-translate-y-1"
               trailing-icon="i-lucide-user"
             >
               <span class="hidden sm:inline">My Library</span>
