@@ -69,28 +69,30 @@
 
           <!-- Enhanced buttons with hover effects -->
           <div
-            class="flex sm:flex-row flex-col justify-center lg:justify-start gap-3 sm:gap-4 mb-6 lg:mb-8 animate-fade-in-delayed-2"
+            class="flex sm:flex-row justify-center lg:justify-start gap-4 sm:gap-3 mb-6 lg:mb-8 animate-fade-in-delayed-2"
           >
             <UButton
               to="/books"
               color="primary"
               variant="solid"
-              size="xl"
-              class="shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:shadow-xl px-6 py-3 rounded-full w-full sm:w-auto font-medium transition-all hover:-translate-y-1"
+              size="lg"
+              class="justify-center items-center shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:shadow-xl rounded-2xl w-full sm:w-auto font-semibold text-base transition-all hover:-translate-y-1 ellipsis"
               trailing-icon="i-lucide-arrow-right"
             >
-              Browse All Books
+              <span class="hidden sm:inline">Browse All Books</span>
+              <span class="sm:hidden inline">Browse</span>
             </UButton>
 
             <UButton
               to="/auth/login"
               color="white"
               variant="outline"
-              size="xl"
-              class="hover:bg-primary/5 dark:hover:bg-primary/20 px-6 py-3 border-2 border-primary dark:border-primary rounded-full w-full sm:w-auto font-medium text-primary dark:text-white transition-all hover:-translate-y-1"
+              size="lg"
+              class="justify-center items-center hover:bg-primary/5 dark:hover:bg-primary/20 border-2 border-primary dark:border-primary rounded-2xl w-full sm:w-auto font-semibold text-primary text-base transition-all hover:-translate-y-1"
               trailing-icon="i-lucide-user"
             >
-              My Library
+              <span class="hidden sm:inline">My Library</span>
+              <span class="sm:hidden inline">Library</span>
             </UButton>
           </div>
 
